@@ -215,7 +215,11 @@ def _extract_string_for_param(
 
     # --- source_string: the main input string --------------------------------
     if param_name in ("source_string", "text", "input", "string", "s"):
-        # Prefer the longest quoted string (likely the source)
+        # Prefer double-quoted strings (avoid splitting on apostrophes)
+        double_quoted = re.findall(r'"([^"]+)"', user_prompt)
+        if double_quoted:
+            return max(double_quoted, key=len)
+        # Fallback: longest quoted string
         if quoted:
             return max(quoted, key=len)
         # Fallback: content after "in "
@@ -251,6 +255,27 @@ def _extract_string_for_param(
 
     # --- replacement: what to replace with -----------------------------------
     if param_name in ("replacement", "replace_with", "new_value", "substitute"):
+        # Map common words to their symbolic equivalents
+        symbol_map = {
+            "asterisks": "*",
+            "asterisk": "*",
+            "stars": "*",
+            "star": "*",
+            "spaces": " ",
+            "space": " ",
+            "underscores": "_",
+            "underscore": "_",
+            "dashes": "-",
+            "dash": "-",
+            "dots": ".",
+            "dot": ".",
+        }
+        
+        # "with asterisks" -> "*"
+        for word, symbol in symbol_map.items():
+            if re.search(rf"\bwith\s+{word}\b", prompt_lower):
+                return symbol
+        
         # "with WORD" at end of prompt (uppercase = literal replacement)
         m = re.search(r"\bwith\s+['\"]?([A-Z][A-Z0-9_]*)['\"]?\s*$", user_prompt)
         if m:
@@ -263,7 +288,8 @@ def _extract_string_for_param(
         m = re.search(r"\bwith\s+(\S+)", user_prompt, re.IGNORECASE)
         if m:
             val = m.group(1).strip("'\"")
-            return val
+            # Check if it's a known symbol word
+            return symbol_map.get(val.lower(), val)
         # Fallback: last quoted string not already used
         used = set(str(v) for v in already_assigned.values())
         remaining = [q for q in quoted if q not in used]
