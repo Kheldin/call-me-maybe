@@ -7,10 +7,6 @@ from typing import Any
 from pydantic import BaseModel, field_validator
 
 
-# ---------------------------------------------------------------------------
-# Types JSON supportés dans les définitions de fonctions
-# ---------------------------------------------------------------------------
-
 JSON_TYPE_MAP: dict[str, type] = {
     "number": float,
     "string": str,
@@ -18,10 +14,6 @@ JSON_TYPE_MAP: dict[str, type] = {
     "integer": int,
 }
 
-
-# ---------------------------------------------------------------------------
-# Modèles pour functions_definition.json
-# ---------------------------------------------------------------------------
 
 class ParameterDefinition(BaseModel):
     """A single function parameter with its type.
@@ -77,10 +69,6 @@ class FunctionDefinition(BaseModel):
     returns: ReturnDefinition
 
 
-# ---------------------------------------------------------------------------
-# Modèles pour function_calling_tests.json
-# ---------------------------------------------------------------------------
-
 class Prompt(BaseModel):
     """A single natural language prompt to process.
 
@@ -90,10 +78,6 @@ class Prompt(BaseModel):
 
     prompt: str
 
-
-# ---------------------------------------------------------------------------
-# Modèle pour un résultat dans le fichier de sortie
-# ---------------------------------------------------------------------------
 
 class FunctionCall(BaseModel):
     """A resolved function call produced by the LLM.
@@ -108,10 +92,6 @@ class FunctionCall(BaseModel):
     name: str
     parameters: dict[str, Any]
 
-
-# ---------------------------------------------------------------------------
-# Fonctions de chargement des fichiers JSON
-# ---------------------------------------------------------------------------
 
 def load_functions_definition(path: str) -> list[FunctionDefinition]:
     """Load and validate the functions definition file.
@@ -159,7 +139,7 @@ def load_prompts(path: str) -> list[Prompt]:
         raise FileNotFoundError(f"Input file not found: {path}")
 
     try:
-        raw = json.loads(file.read_text(encoding="utf-8"))
+        raw: list[dict[str, Any]] = json.loads(file.read_text(encoding="utf-8"))
     except json.JSONDecodeError as e:
         raise ValueError(f"Invalid JSON in input file: {e}") from e
 
