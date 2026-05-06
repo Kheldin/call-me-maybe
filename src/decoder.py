@@ -1,9 +1,3 @@
-"""Constrained decoding engine for structured function call generation.
-
-This module guides the LLM token-by-token to guarantee 100% valid JSON output
-that matches the expected function call schema.
-"""
-
 import json
 import re
 from typing import Any
@@ -13,10 +7,6 @@ from llm_sdk import Small_LLM_Model
 
 from src.models import FunctionDefinition
 
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 
 def _load_vocab(model: Small_LLM_Model) -> dict[str, int]:
     """Load the token vocabulary from the model's vocab file.
@@ -34,7 +24,8 @@ def _load_vocab(model: Small_LLM_Model) -> dict[str, int]:
 
 def _clean_token(token_str: str) -> str:
     """Strip BPE prefix characters (Ġ / ▁) from a token string.
-
+        \u0120 = Ğ = space
+        \u2581 = begin of a word
     Args:
         token_str: Raw token string from vocabulary.
 
@@ -61,16 +52,13 @@ def _constrained_argmax(
         ValueError: If no valid token IDs are provided.
     """
     if not valid_token_ids:
-        raise ValueError("No valid token IDs provided for constrained decoding.")
+        raise ValueError("No valid token IDs provided "
+                         "for constrained decoding.")
     logits_array = np.array(logits, dtype=np.float32)
     mask = np.full(len(logits_array), -np.inf, dtype=np.float32)
     mask[valid_token_ids] = logits_array[valid_token_ids]
     return int(np.argmax(mask))
 
-
-# ---------------------------------------------------------------------------
-# Phase 1 - Select function name
-# ---------------------------------------------------------------------------
 
 def _build_selection_prompt(
     user_prompt: str,
@@ -165,10 +153,6 @@ def _select_function(
     )
     return fn_map[best]
 
-
-# ---------------------------------------------------------------------------
-# Phase 2 - Smart string extraction from prompt
-# ---------------------------------------------------------------------------
 
 def _extract_all_quoted(prompt: str) -> list[str]:
     """Extract all quoted substrings from the prompt in order.
