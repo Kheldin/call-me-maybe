@@ -67,5 +67,20 @@
     "returns": {
       "type": "string"
     }
+  },
+  {
+    "name": "fn_elevate_number_to_power_of_another",
+    "description": "Elevate a number to the power of another number.",
+    "parameters": {
+      "a": {
+        "type": "number"
+      },
+      "b": {
+        "type": "number"
+      }
+    },
+    "returns": {
+      "type": "number"
+    }
   }
 ]

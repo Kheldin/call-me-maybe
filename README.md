@@ -1,8 +1,6 @@
-# call-me-maybe
-
 *This project has been created as part of the 42 curriculum by kacherch.*
 
----
+# call-me-maybe
 
 ## Description
 
@@ -35,7 +33,7 @@ The system doesn't answer "42" — it provides the **tools to solve it**: the co
 
 - **Python 3.13+**
 - **uv** package manager (recommended) or pip
-- ~2GB disk space for model download
+- ~5GB disk space for model download
 
 ### Installation
 
@@ -207,7 +205,7 @@ The vocabulary filtering happens in three layers:
 ### Speed
 - **Model load time:** ~5-10 seconds (one-time)
 - **Per-prompt processing:** ~2-5 seconds on CPU
-- **Total for 11 test prompts:** ~30-45 seconds
+- **Total for 11 test prompts:** ~20-30 seconds
 
 ### Reliability
 The constrained decoding approach ensures that:

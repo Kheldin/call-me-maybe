@@ -1,11 +1,23 @@
+.PHONY: install run debug clean lint lint-strict help
+
+FUNCTIONS ?= data/input/functions_definition.json
+INPUT ?= data/input/function_calling_tests.json
+OUTPUT ?= data/output/function_calls.json
+
 help:
 	@echo "Available targets:"
 	@echo "  make install      - Install project dependencies using uv"
-	@echo "  make run          - Execute the main script"
+	@echo "  make run          - Execute the main script with default paths"
+	@echo "  make run FUNCTIONS=<path> INPUT=<path> OUTPUT=<path>"
+	@echo "                    - Run with custom file paths"
 	@echo "  make debug        - Run the main script in debug mode (pdb)"
 	@echo "  make clean        - Remove temporary files and caches"
 	@echo "  make lint         - Run flake8 and mypy with standard flags"
 	@echo "  make lint-strict  - Run flake8 and mypy with strict flags"
+	@echo ""
+	@echo "Examples:"
+	@echo "  make run"
+	@echo "  make run FUNCTIONS=custom/fns.json INPUT=custom/tests.json"
 
 install:
 	@echo "Installing dependencies with uv..."
@@ -13,7 +25,10 @@ install:
 
 run:
 	@echo "Running the function calling tool..."
-	uv run python -m src
+	@echo "Functions: $(FUNCTIONS)"
+	@echo "Input:     $(INPUT)"
+	@echo "Output:    $(OUTPUT)"
+	uv run python -m src --functions_definition $(FUNCTIONS) --input $(INPUT) --output $(OUTPUT)
 
 debug:
 	@echo "Running in debug mode..."
@@ -27,23 +42,6 @@ clean:
 	find . -type f -name "*.pyc" -delete 2>/dev/null || true
 	find . -type f -name "*.pyo" -delete 2>/dev/null || true
 	rm -rf data/output/*.json 2>/dev/null || true
-	@echo "  ______   __"
-	@echo " /      \ /  |                                                _"
-	@echo "/000000  |00 |  ______    ______   _______                   //"
-	@echo "00 |  00/ 00 | /      \  /      \ /       \                 //"
-	@echo "00 |      00 |/000000  | 000000  |0000000  |               //"
-	@echo "00 |   __ 00 |00    00 | /    00 |00 |  00 |              //"
-	@echo "00 \__/  |00 |00000000/ /0000000 |00 |  00 |             //"
-	@echo "00    00/ 00 |00       |00    00 |00 |  00 |            //"
-	@echo " 000000/  00/  0000000/  0000000/ 00/   00/            //"
-	@echo "                                              ________//_______"
-	@echo "                                             |################|"
-	@echo "                                              ################ "
-	@echo ""
-	@echo "                                         . : .  *    ."
-	@echo "                                        . : *. * . : * . ."
-	@echo "                                       :: *   ..  : . *"
-	@echo "                                      * . *:   *   . * .  ."
 	@echo "Clean complete."
 
 lint:
@@ -57,5 +55,3 @@ lint-strict:
 	flake8 .
 	@echo "Running mypy (strict mode)..."
 	mypy . --strict
-
-.PHONY: install run debug clean lint lint-strict help

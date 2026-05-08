@@ -52,7 +52,7 @@ def _constrained_argmax(
         ValueError: If no valid token IDs are provided.
     """
     if not valid_token_ids:
-        raise ValueError("No valid token IDs provided "
+        raise ValueError("No valid token IDs provided " ""
                          "for constrained decoding.")
     logits_array = np.array(logits, dtype=np.float32)
     mask = np.full(len(logits_array), -np.inf, dtype=np.float32)
@@ -73,14 +73,11 @@ def _build_selection_prompt(
     Returns:
         A formatted prompt string.
     """
-    fn_lines = "\n".join(
-        f"  - {fn.name}: {fn.description}"
-        for fn in functions
-    )
+    fn_lines = "\n".join(f"  - {f.name}: {f.description}" for f in functions)
     return (
         f"You must pick the correct function name for this request.\n"
         f"Available functions:\n{fn_lines}\n\n"
-        f"Request: \"{user_prompt}\"\n\n"
+        f'Request: "{user_prompt}"\n\n'
         f"The correct function name is: "
     )
 
@@ -127,7 +124,7 @@ def _select_function(
             cleaned = _clean_token(token_str)
             if not cleaned:
                 continue
-            if any(name.startswith(generated_text + cleaned) for name in reachable):
+            if any(n.startswith(generated_text + cleaned) for n in reachable):
                 valid_ids.append(token_id)
 
         if not valid_ids:
@@ -145,8 +142,11 @@ def _select_function(
         fn_names,
         key=lambda n: len(
             next(
-                (generated_text[:i] for i in range(len(generated_text), 0, -1)
-                 if n.startswith(generated_text[:i])),
+                (
+                    generated_text[:i]
+                    for i in range(len(generated_text), 0, -1)
+                    if n.startswith(generated_text[:i])
+                ),
                 "",
             )
         ),
@@ -163,10 +163,8 @@ def _extract_all_quoted(prompt: str) -> list[str]:
     Returns:
         List of strings found between quotes (single or double).
     """
-    # Match double quotes first (higher priority to avoid splitting on apostrophes)
     double_quoted = re.findall(r'"([^"]+)"', prompt)
     single_quoted = re.findall(r"'([^']+)'", prompt)
-    # Return double-quoted strings first, then single-quoted
     return double_quoted + single_quoted
 
 
@@ -177,12 +175,17 @@ def _extract_string_for_param(
     param_index: int,
     already_assigned: dict[str, Any],
 ) -> str:
-    """Extract the correct string value for a specific parameter from the prompt.
+    """Extract the correct string value for a specific
+    parameter from the prompt.
 
-    Uses positional and semantic heuristics based on param name and index:
-    - source_string: the longest quoted string, or the content after "in"
-    - regex / pattern: the search term (first short quoted string, or after "word"/"all X")
-    - replacement: what to replace with (after "with", or last quoted/uppercase word)
+    Uses positional and semantic heuristics based
+    on param name and index:
+        - source_string: the longest quoted string,
+    or the content after "in"
+        - regex / pattern: the search term (first short
+    quoted string, or after "word"/"all X")
+        - replacement: what to replace with (after "with",
+            or last quoted/uppercase word)
 
     Args:
         user_prompt: The natural language request.
@@ -207,7 +210,8 @@ def _extract_string_for_param(
         if quoted:
             return max(quoted, key=len)
         # Fallback: content after "in "
-        m = re.search(r"\bin\s+['\"]?(.+?)['\"]?\s*$", user_prompt, re.IGNORECASE)
+        m = re.search(r"\bin\s+['\"]?(.+?)['\"]?\s*$", user_prompt,
+                      re.IGNORECASE)
         if m:
             return m.group(1).strip()
         return user_prompt
@@ -228,7 +232,8 @@ def _extract_string_for_param(
         if m:
             return m.group(1)
         # "the word 'X'" or "word 'X'"
-        m = re.search(r"\bword\s+['\"]([^'\"]+)['\"]", user_prompt, re.IGNORECASE)
+        m = re.search(r"\bword\s+['\"]([^'\"]+)['\"]", user_prompt,
+                      re.IGNORECASE)
         if m:
             return m.group(1)
         # First short quoted string (likely the search term)
@@ -237,9 +242,8 @@ def _extract_string_for_param(
             return short[0]
         return ""
 
-    # --- replacement: what to replace with -----------------------------------
-    if param_name in ("replacement", "replace_with", "new_value", "substitute"):
-        # Map common words to their symbolic equivalents
+    if param_name in ("replacement", "replace_with", "new_value",
+                      "substitute"):
         symbol_map = {
             "asterisks": "*",
             "asterisk": "*",
@@ -254,18 +258,20 @@ def _extract_string_for_param(
             "dots": ".",
             "dot": ".",
         }
-        
+
         # "with asterisks" -> "*"
         for word, symbol in symbol_map.items():
             if re.search(rf"\bwith\s+{word}\b", prompt_lower):
                 return symbol
-        
+
         # "with WORD" at end of prompt (uppercase = literal replacement)
-        m = re.search(r"\bwith\s+['\"]?([A-Z][A-Z0-9_]*)['\"]?\s*$", user_prompt)
+        m = re.search(r"\bwith\s+['\"]?([A-Z][A-Z0-9_]*)['\"]?\s*$",
+                      user_prompt)
         if m:
             return m.group(1)
         # "with 'X'" or 'with "X"'
-        m = re.search(r"\bwith\s+['\"]([^'\"]+)['\"]", user_prompt, re.IGNORECASE)
+        m = re.search(r"\bwith\s+['\"]([^'\"]+)['\"]", user_prompt,
+                      re.IGNORECASE)
         if m:
             return m.group(1)
         # "replace X with Y" -> Y is after "with"
@@ -299,6 +305,7 @@ def _extract_string_for_param(
 # Phase 2 - Number and boolean generation
 # ---------------------------------------------------------------------------
 
+
 def _extract_numbers_from_prompt(user_prompt: str) -> list[float]:
     """Extract all numbers mentioned in the user prompt in order.
 
@@ -330,8 +337,10 @@ def _generate_number_constrained(
     id_to_token = {v: k for k, v in vocab.items()}
     number_chars = set("0123456789.-")
     valid_ids = [
-        tid for tstr, tid in vocab.items()
-        if (s := _clean_token(tstr).strip()) and all(c in number_chars for c in s)
+        tid
+        for tstr, tid in vocab.items()
+        if (s := _clean_token(tstr).strip()) and all(c in number_chars
+                                                     for c in s)
     ]
 
     generated_ids: list[int] = []
@@ -372,17 +381,15 @@ def _generate_boolean_value(
     """
     id_to_token = {v: k for k, v in vocab.items()}
     valid_ids = [
-        tid for tstr, tid in vocab.items()
+        tid
+        for tstr, tid in vocab.items()
         if _clean_token(tstr).strip().lower() in ("true", "false")
     ]
     logits = model.get_logits_from_input_ids(prompt_ids)
     next_id = _constrained_argmax(logits, valid_ids)
-    return _clean_token(id_to_token.get(next_id, "true")).strip().lower() == "true"
+    return (_clean_token(id_to_token.get(next_id, "true")).strip().lower()
+            == "true")
 
-
-# ---------------------------------------------------------------------------
-# Main public function
-# ---------------------------------------------------------------------------
 
 def decode_function_call(
     model: Small_LLM_Model,
@@ -425,7 +432,7 @@ def decode_function_call(
                 number_index += 1
             else:
                 arg_prompt = (
-                    f"Request: \"{user_prompt}\"\n"
+                    f'Request: "{user_prompt}"\n'
                     f"Function: {selected_fn.name}\n"
                     f"Parameters so far: {json.dumps(parameters)}\n"
                     f"Numeric value for '{param_name}': "
@@ -445,7 +452,7 @@ def decode_function_call(
 
         elif param_def.type == "boolean":
             arg_prompt = (
-                f"Request: \"{user_prompt}\"\n"
+                f'Request: "{user_prompt}"\n'
                 f"Function: {selected_fn.name}\n"
                 f"Is '{param_name}' true or false? "
             )
@@ -454,7 +461,8 @@ def decode_function_call(
 
         else:
             value = _extract_string_for_param(
-                user_prompt, selected_fn, param_name, string_param_index, parameters
+                user_prompt, selected_fn, param_name, string_param_index,
+                parameters
             )
             string_param_index += 1
 

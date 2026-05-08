@@ -1,19 +1,10 @@
-"""Entry point for the function calling tool.
-
-Usage:
-    uv run python -m src
-    uv run python -m src --functions_definition data/input/functions_definition.json
-    uv run python -m src --input data/input/function_calling_tests.json
-    uv run python -m src --output data/output/function_calls.json
-"""
-
 import argparse
 import sys
 
 from llm_sdk import Small_LLM_Model
 
 from src.config import (
-    DEFAULT_FUNCTIONS_DEFINITION,
+    DEFAULT_FUNC_DEFINITION,
     DEFAULT_INPUT_FILE,
     DEFAULT_OUTPUT_FILE,
 )
@@ -38,19 +29,22 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         Parsed namespace with functions_definition, input, and output paths.
     """
     parser = argparse.ArgumentParser(
-        description="Translate natural language prompts into structured function calls."
+        description="Translate natural language prompts into structured "
+                    "function calls."
     )
     parser.add_argument(
         "--functions_definition",
         type=str,
-        default=DEFAULT_FUNCTIONS_DEFINITION,
-        help=f"Path to the functions definition JSON file (default: {DEFAULT_FUNCTIONS_DEFINITION})",
+        default=DEFAULT_FUNC_DEFINITION,
+        help=f"Path to the functions definition JSON file "
+             f"(default: {DEFAULT_FUNC_DEFINITION})",
     )
     parser.add_argument(
         "--input",
         type=str,
         default=DEFAULT_INPUT_FILE,
-        help=f"Path to the input prompts JSON file (default: {DEFAULT_INPUT_FILE})",
+        help=f"Path to the input prompts JSON file "
+             f"(default: {DEFAULT_INPUT_FILE})",
     )
     parser.add_argument(
         "--output",
@@ -69,17 +63,16 @@ def main() -> int:
     """
     args = parse_args()
 
-    # --- Load functions definition -------------------------------------------
     try:
         functions: list[FunctionDefinition] = load_functions_definition(
             args.functions_definition
         )
-        print(f"Loaded {len(functions)} function(s): {[f.name for f in functions]}")
+        print(f"Loaded {len(functions)} function(s): "
+              f"{[f.name for f in functions]}")
     except (FileNotFoundError, ValueError) as e:
         print(f"Error loading functions definition: {e}", file=sys.stderr)
         return 1
 
-    # --- Load input prompts --------------------------------------------------
     try:
         prompts: list[Prompt] = load_prompts(args.input)
         print(f"Loaded {len(prompts)} prompt(s).")
@@ -87,12 +80,10 @@ def main() -> int:
         print(f"Error loading input file: {e}", file=sys.stderr)
         return 1
 
-    # --- Load model ----------------------------------------------------------
     print("\nLoading model...")
     model = Small_LLM_Model()
     print(f"Model loaded on: {model._device}\n")
 
-    # --- Run constrained decoding for each prompt ----------------------------
     results: list[FunctionCall] = []
 
     for i, prompt in enumerate(prompts):

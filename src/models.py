@@ -19,7 +19,8 @@ class ParameterDefinition(BaseModel):
     """A single function parameter with its type.
 
     Attributes:
-        type: The JSON type of the parameter (number, string, boolean, integer).
+        type: The JSON type of the parameter (number, string, boolean,
+        integer).
     """
 
     type: str
@@ -39,7 +40,8 @@ class ParameterDefinition(BaseModel):
             ValueError: If the type is not supported.
         """
         if t not in JSON_TYPE_MAP:
-            raise ValueError(f"Unsupported type '{t}'. Must be one of: {list(JSON_TYPE_MAP)}")
+            raise ValueError(f"Unsupported type '{t}'. "
+                             f"Must be one of: {list(JSON_TYPE_MAP)}")
         return t
 
 
@@ -54,7 +56,8 @@ class ReturnDefinition(BaseModel):
 
 
 class FunctionDefinition(BaseModel):
-    """A callable function with its name, description, parameters and return type.
+    """A callable function with its name, description, parameters and
+    return type.
 
     Attributes:
         name: The function identifier (e.g. 'fn_add_numbers').
@@ -113,10 +116,11 @@ def load_functions_definition(path: str) -> list[FunctionDefinition]:
     try:
         raw = json.loads(file.read_text(encoding="utf-8"))
     except json.JSONDecodeError as e:
-        raise ValueError(f"Invalid JSON in functions definition file: {e}") from e
+        raise ValueError(f"Invalid JSON in functions definition file: {e}")
 
     if not isinstance(raw, list):
-        raise ValueError("Functions definition file must contain a JSON array.")
+        raise ValueError("Functions definition file "
+                         "must contain a JSON array.")
 
     return [FunctionDefinition.model_validate(item) for item in raw]
 
@@ -139,7 +143,8 @@ def load_prompts(path: str) -> list[Prompt]:
         raise FileNotFoundError(f"Input file not found: {path}")
 
     try:
-        raw: list[dict[str, Any]] = json.loads(file.read_text(encoding="utf-8"))
+        raw: list[dict[str, Any]] = json.loads(
+            file.read_text(encoding="utf-8"))
     except json.JSONDecodeError as e:
         raise ValueError(f"Invalid JSON in input file: {e}") from e
 
@@ -160,5 +165,6 @@ def save_results(results: list[FunctionCall], path: str) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
 
     data = [result.model_dump() for result in results]
-    output.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+    output.write_text(json.dumps(data, indent=2, ensure_ascii=False),
+                      encoding="utf-8")
     print(f"Results written to {path}")
