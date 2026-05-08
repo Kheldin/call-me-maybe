@@ -8,7 +8,7 @@ from llm_sdk import Small_LLM_Model
 from src.models import FunctionDefinition
 
 
-def _load_vocab(model: Small_LLM_Model) -> dict[str, int]:
+def _load_vocab(model: Small_LLM_Model) -> Any:
     """Load the token vocabulary from the model's vocab file.
 
     Args:
@@ -174,7 +174,7 @@ def _extract_string_for_param(
     param_name: str,
     param_index: int,
     already_assigned: dict[str, Any],
-) -> str:
+) -> Any:
     """Extract the correct string value for a specific
     parameter from the prompt.
 
