@@ -3,7 +3,7 @@ import re
 from typing import Any
 
 import numpy as np
-from llm_sdk import Small_LLM_Model
+from llm_sdk import Small_LLM_Model  # type: ignore
 
 from src.models import FunctionDefinition
 
@@ -200,43 +200,32 @@ def _extract_string_for_param(
     quoted = _extract_all_quoted(user_prompt)
     prompt_lower = user_prompt.lower()
 
-    # --- source_string: the main input string --------------------------------
     if param_name in ("source_string", "text", "input", "string", "s"):
-        # Prefer double-quoted strings (avoid splitting on apostrophes)
         double_quoted = re.findall(r'"([^"]+)"', user_prompt)
         if double_quoted:
             return max(double_quoted, key=len)
-        # Fallback: longest quoted string
         if quoted:
             return max(quoted, key=len)
-        # Fallback: content after "in "
         m = re.search(r"\bin\s+['\"]?(.+?)['\"]?\s*$", user_prompt,
                       re.IGNORECASE)
         if m:
             return m.group(1).strip()
         return user_prompt
 
-    # --- regex / pattern: the search term ------------------------------------
     if param_name in ("regex", "pattern", "search", "find"):
-        # "all numbers" -> \d+
         if re.search(r"\ball numbers?\b", prompt_lower):
             return r"\d+"
-        # "all vowels" -> [aeiouAEIOU]
         if re.search(r"\ball vowels?\b", prompt_lower):
             return "[aeiouAEIOU]"
-        # "all spaces" -> \s+
         if re.search(r"\ball spaces?\b", prompt_lower):
             return r"\s+"
-        # "all X" where X is a word class
         m = re.search(r"\ball\s+(\w+)", prompt_lower)
         if m:
             return m.group(1)
-        # "the word 'X'" or "word 'X'"
         m = re.search(r"\bword\s+['\"]([^'\"]+)['\"]", user_prompt,
                       re.IGNORECASE)
         if m:
             return m.group(1)
-        # First short quoted string (likely the search term)
         short = [q for q in quoted if len(q) <= 20]
         if short:
             return short[0]
@@ -259,36 +248,27 @@ def _extract_string_for_param(
             "dot": ".",
         }
 
-        # "with asterisks" -> "*"
         for word, symbol in symbol_map.items():
             if re.search(rf"\bwith\s+{word}\b", prompt_lower):
                 return symbol
 
-        # "with WORD" at end of prompt (uppercase = literal replacement)
         m = re.search(r"\bwith\s+['\"]?([A-Z][A-Z0-9_]*)['\"]?\s*$",
                       user_prompt)
         if m:
             return m.group(1)
-        # "with 'X'" or 'with "X"'
         m = re.search(r"\bwith\s+['\"]([^'\"]+)['\"]", user_prompt,
                       re.IGNORECASE)
         if m:
             return m.group(1)
-        # "replace X with Y" -> Y is after "with"
         m = re.search(r"\bwith\s+(\S+)", user_prompt, re.IGNORECASE)
         if m:
             val = m.group(1).strip("'\"")
-            # Check if it's a known symbol word
             return symbol_map.get(val.lower(), val)
-        # Fallback: last quoted string not already used
         used = set(str(v) for v in already_assigned.values())
         remaining = [q for q in quoted if q not in used]
         if remaining:
             return remaining[-1]
         return ""
-
-    # --- Generic fallback: positional ----------------------------------------
-    # Use quoted strings in order of appearance, skipping already used ones
     used_vals = set(str(v) for v in already_assigned.values())
     remaining = [q for q in quoted if q not in used_vals]
     if param_index < len(remaining):
@@ -299,11 +279,6 @@ def _extract_string_for_param(
     # Last resort: last meaningful word
     words = re.findall(r"\b[a-zA-Z]\w*\b", user_prompt)
     return words[-1] if words else ""
-
-
-# ---------------------------------------------------------------------------
-# Phase 2 - Number and boolean generation
-# ---------------------------------------------------------------------------
 
 
 def _extract_numbers_from_prompt(user_prompt: str) -> list[float]:
@@ -415,10 +390,8 @@ def decode_function_call(
     """
     vocab = _load_vocab(model)
 
-    # --- Phase 1: select function -------------------------------------------
     selected_fn = _select_function(model, vocab, user_prompt, functions)
 
-    # --- Phase 2: generate arguments ----------------------------------------
     parameters: dict[str, Any] = {}
     numbers_seen = _extract_numbers_from_prompt(user_prompt)
     number_index = 0

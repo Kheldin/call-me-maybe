@@ -1,7 +1,7 @@
 import argparse
 import sys
 
-from llm_sdk import Small_LLM_Model
+from llm_sdk import Small_LLM_Model  # type: ignore
 
 from src.config import (
     DEFAULT_FUNC_DEFINITION,
@@ -100,7 +100,6 @@ def main() -> int:
         except Exception as e:
             print(f"  ✗ Error: {e}", file=sys.stderr)
 
-    # --- Write output file ---------------------------------------------------
     try:
         save_results(results, args.output)
     except Exception as e:
