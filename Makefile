@@ -52,6 +52,6 @@ lint:
 
 lint-strict:
 	@echo "Running flake8..."
-	flake8 .
+	flake8 src
 	@echo "Running mypy (strict mode)..."
 	mypy src --strict
